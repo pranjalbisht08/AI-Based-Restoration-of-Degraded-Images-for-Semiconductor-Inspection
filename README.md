@@ -1,4 +1,3 @@
-
 # SEMICON AI — AI-Based Restoration of Degraded Images for Semiconductor Inspection
 
 Semicon India Hackathon 2026
@@ -15,14 +14,16 @@ dashboard, and a classical-CV defect detection module.
 
 ```
 semicon-restoration/
+├── README.md
+├── requirements.txt
+├── .gitignore
 ├── app.py                     # Streamlit interactive dashboard
 ├── model.py                   # Autoencoder model definition
 ├── train.py                   # Training script (reproduces the model from scratch)
-├── inference.py                # Standalone evaluation script (dir -> dir)
+├── inference.py                # Standalone evaluation script (dir -> dir, supports .png/.jpg/.bmp/.npy)
 ├── evaluate.py                 # Single-image evaluation with PSNR/SSIM/sharpness report
 ├── generate_dataset.py         # Generates the synthetic training dataset
 ├── generate_test_set.py        # Generates a degraded test set for inference.py
-├── requirements.txt
 ├── models/
 │   └── restoration_model.pth   # Trained model weights
 ├── utils/
@@ -84,6 +85,21 @@ The standalone evaluation script accepts an input directory of test images
 and an output directory, and writes restored versions of each image to the
 output directory. No manual code edits required.
 
+**Supported formats:** `.png`, `.jpg`, `.jpeg`, `.bmp`, and `.npy`. Format is
+auto-detected per file, and each restored output is saved in the **same
+format as its corresponding input** (a `.npy` input produces a `.npy`
+output; a `.png` input produces a `.png` output). Folders containing a mix
+of formats are supported in a single run.
+
+`.npy` files are expected to contain a NumPy array of pixel data, either:
+- `uint8` values in range 0-255, or
+- `float` values in range 0-1 (normalized)
+- grayscale `(H, W)`, RGB `(H, W, 3)`, or RGBA `(H, W, 4)`
+
+All of the above are handled automatically. `.npy` arrays are assumed to use
+RGB channel order (the standard NumPy/PIL convention), and outputs are
+written back in that same convention.
+
 **Optional — generate a sample degraded test set first:**
 ```bash
 python generate_test_set.py
@@ -98,10 +114,10 @@ python inference.py --input_dir test_images --output_dir restored_outputs
 This will:
 1. Load the trained model from `models/restoration_model.pth`
 2. Run every image in `--input_dir` through the model
-3. Save the restored version of each image (at its original resolution) to `--output_dir`
+3. Save the restored version of each image (at its original resolution) to `--output_dir`, in the same file format it was read in
 
 To run on your own test images instead, just point `--input_dir` at any
-folder of images:
+folder of images (`.png`/`.jpg`/`.bmp`/`.npy`, any mix):
 ```bash
 python inference.py --input_dir path/to/your/images --output_dir path/to/save/results
 ```
